@@ -26,11 +26,15 @@ export default class LineItem extends Component {
         this.props.onChangeTotalPrice(this.props.lineItemId, totalPrice);
     };
 
+    onChangeLineItem = (event) => {
+        this.props.onChangeLineItem(this.props.lineItemId, event.target.checked);
+    }
+
     render(){
         return (
             
                 <tr>
-                    <td><input type="checkbox"/></td>
+                    <td><input type="checkbox" checked={this.props.isSelected} onChange={this.onChangeLineItem}/></td>
                 <td>
                     <input type="text" value={this.state.name} onChange={this.onChangeName} name="name"/>
                     </td>
@@ -41,7 +45,7 @@ export default class LineItem extends Component {
                         <input type="text" value={this.state.quantity} onChange={this.onChangeQuantity} name="quantity"/>
                    </td>
                     <td>
-                        <span name="totalPrice">{formatMoney(this.state.totalPrice)} €</span>
+                        <span name="totalPrice">{formatMoney(this.state.totalPrice)}</span>
                     </td>
                     </tr>
             
