@@ -1,8 +1,15 @@
 import React, { Component } from 'react';
+//middleware react-redux
+import {connect} from 'react-redux';
+
 import LineItem from '../components/LineItem';
+import {runActionEditDiscount} from '../redux/actions';
+
 import {formatMoney} from '../lib/utilities';
 
-export default class Invoice extends Component {
+
+
+export class Invoice extends Component {
     constructor(props) {
         super(props);
         this.state = { lineItems : [], subTotal : 0 , tva: 0, grandTotal: 0};
@@ -102,12 +109,26 @@ export default class Invoice extends Component {
                 </table>
                    <button onClick={this.addLineItem}>+</button>
                    <button onClick={this.removeLineItem}>Crabouiller</button>
-                </form>
+                
                 <p>Sous Total HT : {formatMoney(this.state.subTotal)} </p>
                 <p>Montant de la TVA : {formatMoney(this.state.tva)} </p>
                 <p>Montant TTC : {formatMoney(this.state.grandTotal)} </p>
+                {this.props.discount}
                 
+                </form>
             </div>
-        )
+        );
     }
 }
+
+const InvoicewWithRedux = connect(
+    (state)=>
+    ({
+        discount: state.discount
+    }),
+    {
+        runActionEditDiscount
+    }
+)(Invoice);
+
+export default InvoicewWithRedux;
