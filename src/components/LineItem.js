@@ -1,33 +1,44 @@
 import React, { Component } from 'react';
 import {formatMoney} from '../lib/utilities';
 
-export default class LineItem extends Component {
+//middleware react-redux
+import {connect} from 'react-redux';
 
-    constructor(props) {
-        super(props);
-        this.state = {name: "", unitPrice: 0, quantity: 0, totalPrice: 0};
-    };
+import {
+    runActionComputeInvoice,
+    runActionEditLineItem
+} from '../redux/actions';
+
+export class LineItem extends Component {
 
     onChangeName = (event)=> {
-        this.setState({name: event.target.value});
+        const name = event.target.value
+
+        this.props.runActionEditLineItem(this.props.lineItemId, { name });
     };
 
     onChangeUnitPrice = (event) => {
         const unitPrice = parseInt(event.target.value);
-        const totalPrice = this.state.quantity * unitPrice;
-        this.setState({unitPrice: unitPrice, totalPrice : totalPrice});
-        this.props.onChangeTotalPrice(this.props.lineItemId,totalPrice);
+        const totalPrice = this.props.quantity * unitPrice;
+
+        this.props.runActionEditLineItem(this.props.lineItemId, { totalPrice, unitPrice });
+
+        this.props.runActionComputeInvoice();
     };
 
     onChangeQuantity = (event) => {
         const quantity = parseInt(event.target.value);
-        const totalPrice = this.state.unitPrice * quantity
-        this.setState({quantity: quantity,  totalPrice:totalPrice});
-        this.props.onChangeTotalPrice(this.props.lineItemId, totalPrice);
+        const totalPrice = this.props.unitPrice * quantity;
+
+        this.props.runActionEditLineItem(this.props.lineItemId, { totalPrice, quantity })
+        
+        this.props.runActionComputeInvoice();
     };
 
     onChangeLineItem = (event) => {
-        this.props.onChangeLineItem(this.props.lineItemId, event.target.checked);
+        const isSelected = event.target.checked;
+
+        this.props.runActionEditLineItem(this.props.lineItemId, { isSelected });
     }
 
     render(){
@@ -36,19 +47,30 @@ export default class LineItem extends Component {
                 <tr>
                     <td><input type="checkbox" checked={this.props.isSelected} onChange={this.onChangeLineItem}/></td>
                 <td>
-                    <input type="text" value={this.state.name} onChange={this.onChangeName} name="name"/>
+                    <input type="text" value={this.props.name} onChange={this.onChangeName} name="name"/>
                     </td>
                  <td>
-                    <input type="text" value={this.state.unitPrice} onChange={this.onChangeUnitPrice} name="unitPrice"/>
+                    <input type="text" value={this.props.unitPrice} onChange={this.onChangeUnitPrice} name="unitPrice"/>
                    </td>
                    <td>
-                        <input type="text" value={this.state.quantity} onChange={this.onChangeQuantity} name="quantity"/>
+                        <input type="text" value={this.props.quantity} onChange={this.onChangeQuantity} name="quantity"/>
                    </td>
                     <td>
-                        <span name="totalPrice">{formatMoney(this.state.totalPrice)}</span>
+                        <span name="totalPrice">{formatMoney(this.props.totalPrice)}</span>
                     </td>
                     </tr>
             
         )
     }
 }
+
+const LineItemwWithRedux = connect(
+    null,
+
+    {
+        runActionComputeInvoice,
+        runActionEditLineItem
+    }
+)(LineItem);
+
+export default LineItemwWithRedux;

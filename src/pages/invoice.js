@@ -3,88 +3,59 @@ import React, { Component } from 'react';
 import {connect} from 'react-redux';
 
 import LineItem from '../components/LineItem';
-import {runActionEditDiscount} from '../redux/actions';
+import {
+    runActionEditDiscount, 
+    runActionComputeInvoice,
+    runActionAddLineItem,
+    runActionToggleAllLineItems,
+    runActionRemoveSelectedLineItems
+} from '../redux/actions';
 
 import {formatMoney} from '../lib/utilities';
 
 
 
 export class Invoice extends Component {
-    constructor(props) {
-        super(props);
-        this.state = { lineItems : [], subTotal : 0 , tva: 0, grandTotal: 0};
-    };
 
     componentDidMount() {
-        this.addLineItem();
-    }
-
-    computeInvoice = () => {
-        let subTotal = 0;
-        let tva;
-        let grandTotal;
-
-        for(const item of this.state.lineItems) {
-            subTotal += item.totalPrice;
-        }
-        tva = subTotal *0.2;
-        grandTotal = subTotal + tva;
-
-        this.setState({ tva, subTotal, grandTotal });
-    }
-
-    addLineItem = () => {
-        let lineItems = [...this.state.lineItems];
-        lineItems.push({totalPrice: 0, isSelected: false});
-        this.setState({lineItems});
-    }
-
-    removeLineItem = () => {
-        let lineItems = this.state.lineItems.filter((lineItem) => {
-            return lineItem.isSelected === false;
-        });
-
-        this.setState({lineItems}, ()=> {this.computeInvoice()});
+        this.props.runActionAddLineItem();
     }
 
     onSubmit = (event) => {
         event.preventDefault();
     }
-    onChangeLineItem = (lineItemId, isSelected) => {
-        let lineItems = [ ...this.state.lineItems ];
-        lineItems[lineItemId].isSelected = isSelected;
+  
+    onChangeToggleAllLineItems = (event) => {
+        const isSelected = event.target.checked;
 
-        this.setState({ lineItems });
+        this.props.runActionToggleAllLineItems(isSelected);
     }
 
-    onChangeTotalPrice = (lineItemId, totalPrice) => {
-        let lineItems = [ ...this.state.lineItems ];
-        lineItems[lineItemId].totalPrice = totalPrice;
-
-        this.computeInvoice();
-
-        this.setState({ lineItems });
-
+    onChangeDiscount = (event) => {
+        const discountRate = parseFloat(event.target.value);
+        this.props.runActionEditDiscount(discountRate);
+        this.props.runActionComputeInvoice();
     }
 
-    selectAllLineItems = (event) => {
-        let lineItems = [...this.state.lineItems];
-
-        for(let lineItem of lineItems) {
-            lineItem.isSelected = event.target.checked;
-        }
-        this.setState({lineItems});
+    onClickRemoveSelectedLineItems = () => {
+        this.props.runActionRemoveSelectedLineItems();
+        this.props.runActionComputeInvoice();
     }
+
 
     render() {
-        const lineItems = this.state.lineItems.map((lineItem, index) => 
+        const lineItems = this.props.lineItems.map((lineItem, index) => 
         (
-        <LineItem 
-        isSelected={lineItem.isSelected} 
-        key={index} 
-        lineItemId={index} 
-        onChangeTotalPrice={this.onChangeTotalPrice}
-        onChangeLineItem={this.onChangeLineItem}/>
+            <LineItem 
+                key={index} 
+
+                lineItemId={index} 
+
+                isSelected={lineItem.isSelected} 
+                name={lineItem.name} 
+                quantity={lineItem.quantity} 
+                unitPrice={lineItem.unitPrice}
+                totalPrice={lineItem.totalPrice}/>
         ));
 
         return (
@@ -95,7 +66,7 @@ export class Invoice extends Component {
                 <table>
                     <thead>
                         <tr>
-                            <th><input onChange={this.selectAllLineItems} type="checkbox"/>Tout selectionner</th>
+                            <th><input onChange={this.onChangeToggleAllLineItems} type="checkbox"/>Tout selectionner</th>
                             <th>Nom</th>
                             <th>Prix</th>
                             <th>Quantité</th>
@@ -107,14 +78,15 @@ export class Invoice extends Component {
                 {lineItems}
                 </tbody>
                 </table>
-                   <button onClick={this.addLineItem}>+</button>
-                   <button onClick={this.removeLineItem}>Crabouiller</button>
+                   <button onClick={this.props.runActionAddLineItem}>+</button>
+                   <button onClick={this.onClickRemoveSelectedLineItems}>Crabouiller</button>
                 
-                <p>Sous Total HT : {formatMoney(this.state.subTotal)} </p>
-                <p>Montant de la TVA : {formatMoney(this.state.tva)} </p>
-                <p>Montant TTC : {formatMoney(this.state.grandTotal)} </p>
-                {this.props.discount}
-                
+                <p>Sous Total HT : {formatMoney(this.props.subTotal)} </p>
+                <p>Montant de la TVA : {formatMoney(this.props.tva)} </p>
+                <p>Montant TTC : {formatMoney(this.props.grandTotal)} </p>
+                <label>Vous avez une réduction !!?? 
+                <input type="text" onChange={this.onChangeDiscount} value={this.props.discountRate} />%
+                </label>
                 </form>
             </div>
         );
@@ -124,10 +96,19 @@ export class Invoice extends Component {
 const InvoicewWithRedux = connect(
     (state)=>
     ({
-        discount: state.discount
+        discountTotal: state.discountTotal,
+        lineItems: state.lineItems,
+        subTotal: state.subTotal,
+        tva: state.tva,
+        grandTotal: state.grandTotal,
+        discountRate: state.discountRate
     }),
     {
-        runActionEditDiscount
+        runActionEditDiscount,
+        runActionComputeInvoice,
+        runActionAddLineItem,
+        runActionToggleAllLineItems,
+        runActionRemoveSelectedLineItems
     }
 )(Invoice);
 
